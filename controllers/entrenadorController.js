@@ -1,5 +1,5 @@
 const Entrenador = require("../models/entrenador");
-const bcrypt = require("bcrypt");
+const bcrypt = require('bcryptjs');
 const SALT_ROUNDS = 10;
 
 exports.crearEntrenador = async (req, res) => {
