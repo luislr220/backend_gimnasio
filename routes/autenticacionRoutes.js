@@ -2,45 +2,58 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/autenticacionController");
 const axios = require("axios");
-const { ECAPTCHA_SECRET } = require("../config/credentials"); // Asegúrate de tener esto en tu archivo de config
+const { ECAPTCHA_SECRET } = require("../config/credentials");
 
-// Endpoints existentes
-router.post("/login", authController.iniciarSesion);
-router.post('/verificar-token', authController.verificarToken);
+// Validación mejorada de reCAPTCHA
+const validateCaptcha = async (req, res, next) => {
+  const { captchaToken } = req.body;
+  
+  if (!captchaToken) {
+    return res.status(400).json({ 
+      success: false, 
+      error: "Token de CAPTCHA requerido" 
+    });
+  }
 
-// Nuevo endpoint para validar reCAPTCHA
-router.post('/validar-captcha', async (req, res) => {
-    const { captchaToken } = req.body;
+  try {
+    const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
+    const response = await axios.post(verificationUrl, null, {
+      params: {
+        secret: ECAPTCHA_SECRET,
+        response: captchaToken
+      },
+      headers: { 
+        'Content-Type': 'application/x-www-form-urlencoded' 
+      }
+    });
 
-    if (!captchaToken) {
-        return res.status(400).json({ success: false, error: "Token de CAPTCHA faltante" });
+    if (!response.data.success) {
+      console.warn("Intento fallido de CAPTCHA:", {
+        errors: response.data['error-codes'],
+        ip: req.ip
+      });
+      return res.status(400).json({
+        success: false,
+        error: "Verificación de CAPTCHA fallida",
+        details: response.data['error-codes']
+      });
     }
 
-    try {
-        const response = await axios.post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            `secret=${ECAPTCHA_SECRET}&response=${captchaToken}`,
-            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-        );
+    next();
+  } catch (error) {
+    console.error("Error en validación CAPTCHA:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor al validar CAPTCHA"
+    });
+  }
+};
 
-        if (!response.data.success) {
-            console.error("Error en CAPTCHA:", response.data['error-codes']);
-            return res.status(400).json({ 
-                success: false, 
-                error: "CAPTCHA inválido",
-                details: response.data['error-codes'] 
-            });
-        }
-
-        res.json({ success: true });
-
-    } catch (error) {
-        console.error("Error al validar CAPTCHA:", error);
-        res.status(500).json({ 
-            success: false, 
-            error: "Error interno al validar CAPTCHA" 
-        });
-    }
+// Endpoints con validación de CAPTCHA donde sea necesario
+router.post("/login", validateCaptcha, authController.iniciarSesion);
+router.post("/verificar-token", authController.verificarToken);
+router.post("/validar-captcha", validateCaptcha, (req, res) => {
+  res.json({ success: true, message: "CAPTCHA validado correctamente" });
 });
 
 module.exports = router;

@@ -2,53 +2,37 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-// Use CORS middleware
-app.use(cors());
+// Configuración CORRECTA de CORS
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'https://sitio-fitness.onrender.com',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-/* const corsOptions = {
-  origin: "https://www.nileshblog.tech/", //(https://your-client-app.com)
-  optionsSuccessStatus: 200,
-};
-
-app.use(cors(corsOptions)); */
-
-//Middleware para que express pueda entender json
+// Middleware para JSON
 app.use(express.json());
 
-//Ruta por defecto que manda un response al visitar el home
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+// Rutas
+app.get("/", (req, res) => res.send("API FitnessPro"));
 
-//Rutas de usuarios
-const usuariosRoutes = require("./routes/usuariosRoutes");
-app.use("/usuarios", usuariosRoutes);
+// Importación y uso de rutas
+const routes = [
+  { path: "/usuarios", router: require("./routes/usuariosRoutes") },
+  { path: "/gimnasios", router: require("./routes/gymRoutes") },
+  { path: "/entrenadores", router: require("./routes/entrenadorRoutes") },
+  { path: "/citas", router: require("./routes/citasRoutes") },
+  { path: "/auth", router: require("./routes/autenticacionRoutes") },
+  { path: "/solicitudes", router: require("./routes/solicitudesRoutes") },
+  { path: "/videos", router: require("./routes/videosRoutes") }
+];
 
-//Rutas de gimnasios
-const gymRoutes = require("./routes/gymRoutes");
-app.use("/gimnasios", gymRoutes);
+routes.forEach(route => app.use(route.path, route.router));
 
-//Rutas de entrenadores
-const entrenadorRoutes = require("./routes/entrenadorRoutes");
-app.use("/entrenadores", entrenadorRoutes);
-
-const citasRoutes = require("./routes/citasRoutes");
-app.use("/citas", citasRoutes);
-
-//Rutas de autenticación
-const authRoutes = require("./routes/autenticacionRoutes");
-app.use("/auth", authRoutes);
-
-//Rutas de solicitudes de entrenador
-const solicitudesRoutes = require("./routes/solicitudesRoutes");
-app.use("/solicitudes", solicitudesRoutes);
-
-//Rutas de videos
-const videoRoutes = require("./routes/videosRoutes");
-app.use("/videos", videoRoutes);
-
-// Set up the server to listen on port 3000
+// Inicio del servidor
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+  console.log(`Servidor ejecutándose en puerto ${port}`);
+  console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Frontend permitido: ${process.env.FRONTEND_URL || 'https://sitio-fitness.onrender.com'}`);
 });
