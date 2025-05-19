@@ -1,5 +1,5 @@
 const Auth = require("../models/autenticacion");
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const transporter = require("../config/emailController");
 

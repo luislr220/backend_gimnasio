@@ -1,5 +1,5 @@
 const Usuario = require("../models/usuario");
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcrypt");
 const SALT_ROUNDS = 10;
 
 exports.registrarUsuario = async (req, res) => {
