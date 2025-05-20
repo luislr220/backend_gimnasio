@@ -1,15 +1,14 @@
 const Gimnasio = require("../models/gym");
 
+// Crear gym
 exports.crearGym = async (req, res) => {
-  const { nombre, direccion, hora_entrada, hora_salida, descripcion } =
-    req.body;
+  const { nombre, direccion, hora_entrada, hora_salida, descripcion } = req.body;
 
   if (!nombre || !direccion || !hora_entrada || !hora_salida || !descripcion) {
     return res.status(400).json({
       exito: false,
       mensaje: "Todos los campos son requeridos",
-      detalles:
-        "Nombre, dirección, hora de entrada y hora de salida son obligatorios",
+      detalles: "Nombre, dirección, hora de entrada, hora de salida y descripción son obligatorios",
     });
   }
 
@@ -28,16 +27,16 @@ exports.crearGym = async (req, res) => {
       detalles: gimnasio,
     });
   } catch (error) {
-    console - error("Error al crear el gym", error);
+    console.error("Error al crear el gym:", error);
     res.status(500).json({
       exito: false,
       mensaje: "Error al crear el gimnasio",
-      detalles: "Ocurrio un error interno del servidor",
+      detalles: "Ocurrió un error interno del servidor",
     });
   }
 };
 
-//Actualizar gym
+// Actualizar gym
 exports.actualizarGym = async (req, res) => {
   const {
     id_gimnasio,
@@ -96,6 +95,7 @@ exports.actualizarGym = async (req, res) => {
   }
 };
 
+// Obtener todos los gyms
 exports.obtenerGyms = async (req, res) => {
   try {
     const gimnasios = await Gimnasio.obtenerGyms();
@@ -110,6 +110,44 @@ exports.obtenerGyms = async (req, res) => {
     res.status(500).json({
       exito: false,
       mensaje: "Error al obtener los gimnasios",
+      detalles: "Ocurrió un error interno del servidor",
+    });
+  }
+};
+
+// Obtener gym por ID
+exports.obtenerGymPorId = async (req, res) => {
+  const { id_gimnasio } = req.params;
+
+  if (!id_gimnasio) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: "ID requerido",
+      detalles: "El ID del gimnasio es obligatorio",
+    });
+  }
+
+  try {
+    const gimnasio = await Gimnasio.obtenerGymPorId(id_gimnasio);
+
+    if (!gimnasio) {
+      return res.status(404).json({
+        exito: false,
+        mensaje: "Gimnasio no encontrado",
+        detalles: "No existe un gimnasio con ese ID",
+      });
+    }
+
+    res.json({
+      exito: true,
+      mensaje: "Gimnasio encontrado",
+      datos: gimnasio,
+    });
+  } catch (error) {
+    console.error("Error al obtener el gimnasio:", error);
+    res.status(500).json({
+      exito: false,
+      mensaje: "Error al obtener el gimnasio",
       detalles: "Ocurrió un error interno del servidor",
     });
   }
@@ -150,6 +188,6 @@ exports.eliminarGym = async (req, res) => {
       exito: false,
       mensaje: "Error al eliminar el gimnasio",
       detalles: "Ocurrió un error interno del servidor",
-    });
-  }
+    });
+  }
 };
