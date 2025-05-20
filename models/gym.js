@@ -90,8 +90,9 @@ exports.eliminarGym = async (id_gimnasio) => {
     throw error;
   } finally {
     client.release();
-  }
+  }
 };
+
 
 exports.obtenerGymPorId = async (id_gimnasio) => {
   const consulta = `
