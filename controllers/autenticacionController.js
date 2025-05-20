@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const transporter = require("../config/emailController");
 
+// Iniciar sesión
 exports.iniciarSesion = async (req, res) => {
   const { correo, contrasena } = req.body;
 
@@ -41,8 +42,6 @@ exports.iniciarSesion = async (req, res) => {
     }
 
     // Generar token 2FA
-    // Generar token alfanumérico de 8 caracteres
-    //const token2FA = crypto.randomBytes(4).toString("hex").toUpperCase();
     const token2FA = crypto.randomInt(100000, 999999).toString();
     const expiracion = new Date(Date.now() + 10 * 60000);
 
@@ -99,6 +98,7 @@ exports.iniciarSesion = async (req, res) => {
   }
 };
 
+// Verificar token 2FA
 exports.verificarToken = async (req, res) => {
   const { id_usuario, id_entrenador, token, tipo } = req.body;
   const id = tipo === "entrenador" ? id_entrenador : id_usuario;
@@ -148,7 +148,7 @@ exports.verificarToken = async (req, res) => {
   }
 };
 
-// Solicitar recuperación
+// Solicitar recuperación de contraseña
 exports.solicitarRecuperacion = async (req, res) => {
   const { correo } = req.body;
   if (!correo) {
@@ -193,6 +193,7 @@ exports.solicitarRecuperacion = async (req, res) => {
       .json({ exito: false, mensaje: "Error al solicitar recuperación" });
   }
 };
+
 // Cambiar contraseña usando token
 exports.cambiarContrasenaConToken = async (req, res) => {
   const { token, nuevaContrasena } = req.body;
