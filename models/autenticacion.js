@@ -79,7 +79,7 @@ exports.guardarTokenRecuperacion = async (correo, token, expiracion, tipo) => {
   const consulta = `
     UPDATE ${tabla}
     SET token_recuperacion = $1,
-        token_recuperacion_expiracion = $20
+        token_recuperacion_expiracion = $2
     WHERE correo = $3
   `;
   await pool.query(consulta, [token, expiracion, correo]);
