@@ -2,6 +2,7 @@ const Usuario = require("../models/usuario");
 const bcrypt = require("bcrypt");
 const SALT_ROUNDS = 10;
 
+// Registrar usuario
 exports.registrarUsuario = async (req, res) => {
   const { nombre, correo, contrasena, rol } = req.body;
 
@@ -52,55 +53,57 @@ exports.registrarUsuario = async (req, res) => {
       detalles: "Ocurrió un error interno del servidor",
     });
   }
-    exports.actualizarEntrenador = async (req, res) => {
-    const { nombre, correo, costoMensual, costoSesion } = req.body;
-    const id_entrenador = req.session?.id_entrenador || req.body.id_entrenador || req.body.id || req.body.idEntrenador || req.body.id_entrenador;
-  
-    if (!id_entrenador || !nombre || !correo) {
+};
+
+// Actualizar usuario
+exports.actualizarUsuario = async (req, res) => {
+  const { id_usuario, nombre, correo } = req.body;
+
+  if (!id_usuario || !nombre || !correo) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: "Por favor llene todos los campos",
+      detalles: "Todos los campos son obligatorios",
+    });
+  }
+
+  try {
+    const usuarioActualizado = await Usuario.actualizarUsuario({
+      id_usuario,
+      nombre,
+      correo,
+    });
+
+    if (!usuarioActualizado) {
+      return res.status(404).json({
+        exito: false,
+        mensaje: "Usuario no encontrado",
+        detalles: "No existe un usuario con ese ID",
+      });
+    }
+
+    const { contrasena, ...usuarioSinContrasena } = usuarioActualizado;
+
+    res.json({
+      exito: true,
+      mensaje: "Usuario actualizado exitosamente",
+      datos: usuarioSinContrasena,
+    });
+  } catch (error) {
+    console.error("Error al actualizar usuario:", error);
+
+    if (error.code === "23505") {
       return res.status(400).json({
         exito: false,
-        mensaje: "Datos incompletos",
-        detalles: "ID, nombre y correo son obligatorios",
+        mensaje: "El correo ya está registrado",
+        detalles: "Por favor use otro correo electrónico",
       });
     }
-  
-    try {
-      const entrenadorActualizado = await Entrenador.actualizarEntrenador({
-        id_entrenador,
-        nombre,
-        correo,
-        costoMensual,
-        costoSesion,
-      });
-  
-      if (!entrenadorActualizado) {
-        return res.status(404).json({
-          exito: false,
-          mensaje: "Entrenador no encontrado",
-        });
-      }
-  
-      res.json({
-        exito: true,
-        mensaje: "Entrenador actualizado correctamente",
-        datos: entrenadorActualizado,
-      });
-    } catch (error) {
-      console.error("Error al actualizar entrenador:", error);
-  
-      if (error.code === "23505") {
-        return res.status(400).json({
-          exito: false,
-          mensaje: "El correo ya está registrado",
-          detalles: "Por favor use otro correo electrónico",
-        });
-      }
-  
-      res.status(500).json({
-        exito: false,
-        mensaje: "Error al actualizar entrenador",
-        detalles: "Ocurrió un error interno del servidor",
-      });
-    }
-  };
-};
+
+    res.status(500).json({
+      exito: false,
+      mensaje: "Error al actualizar usuario",
+      detalles: "Ocurrió un error interno del servidor",
+    });
+  }
+   };
