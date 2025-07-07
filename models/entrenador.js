@@ -103,3 +103,18 @@ exports.darseDeBajaDelGym = async (id_entrenador) => {
   const resultado = await pool.query(consulta, [id_entrenador]);
   return resultado.rows[0];
 };
+exports.actualizarEntrenador = async ({ id_entrenador, nombre, correo, costoMensual, costoSesion }) => {
+  const consulta = `
+    UPDATE entrenadores
+    SET nombre = $1,
+        correo = $2,
+        costo_mensual = $3,
+        costo_sesion = $4,
+        fecha_actualizacion = CURRENT_TIMESTAMP
+    WHERE id_entrenador = $5
+    RETURNING id_entrenador, nombre, correo, costo_mensual, costo_sesion
+  `;
+  const valores = [nombre, correo, costoMensual, costoSesion, id_entrenador];
+  const resultado = await pool.query(consulta, valores);
+  return resultado.rows[0];
+};

@@ -6,5 +6,6 @@ router.post("/crear", entrenadorController.crearEntrenador);
 router.post("/por-gym", entrenadorController.obtenerPorGym);
 router.get("/:id_entrenador", entrenadorController.obtenerPorId);
 router.post("/baja-gym", entrenadorController.darseDeBajaDelGym);
+router.put("/actualizar", entrenadorController.actualizarEntrenador);
 
 module.exports = router;
