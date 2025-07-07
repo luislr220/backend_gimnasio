@@ -8,13 +8,7 @@ router.post("/registrar", usuarioController.registrarUsuario);
 // Actualizar usuario
 router.put("/actualizar", usuarioController.actualizarUsuario);
 
-// Obtener todos los usuarios
-router.get("/listar", usuarioController.obtenerUsuarios);
-
-// Obtener usuario por ID
+// Obtener usuario por ID (si lo necesitas en el futuro)
 router.get("/:id_usuario", usuarioController.obtenerUsuarioPorId);
 
-// Eliminar usuario
-router.delete("/eliminar/:id_usuario", usuarioController.eliminarUsuario);
-
-module.exports = router;
+module.exports
