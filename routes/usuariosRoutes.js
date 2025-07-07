@@ -10,4 +10,4 @@ router.put("/actualizar", usuarioController.actualizarUsuario);
 
 
 
-module.exports
+module.exports = router;
