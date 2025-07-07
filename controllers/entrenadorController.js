@@ -95,7 +95,7 @@ exports.crearEntrenador = async (req, res) => {
   }
 };
 
-//Obtener entrenador por gym
+// Obtener entrenador por gym
 exports.obtenerPorGym = async (req, res) => {
   const { id_gimnasio } = req.body;
 
@@ -188,54 +188,56 @@ exports.darseDeBajaDelGym = async (req, res) => {
       mensaje: "Error al darse de baja del gimnasio",
     });
   }
-    exports.actualizarEntrenador = async (req, res) => {
-    const { id_entrenador, nombre, correo, costo_mensual, costo_sesion } = req.body;
-  
-    if (!id_entrenador || !nombre || !correo) {
+};
+
+// ACTUALIZAR ENTRENADOR (fuera de cualquier otra función)
+exports.actualizarEntrenador = async (req, res) => {
+  const { id_entrenador, nombre, correo, costo_mensual, costo_sesion } = req.body;
+
+  if (!id_entrenador || !nombre || !correo) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: "Datos incompletos",
+      detalles: "ID, nombre y correo son obligatorios",
+    });
+  }
+
+  try {
+    const entrenadorActualizado = await Entrenador.actualizarEntrenador({
+      id_entrenador,
+      nombre,
+      correo,
+      costo_mensual,
+      costo_sesion,
+    });
+
+    if (!entrenadorActualizado) {
+      return res.status(404).json({
+        exito: false,
+        mensaje: "Entrenador no encontrado",
+      });
+    }
+
+    res.json({
+      exito: true,
+      mensaje: "Entrenador actualizado correctamente",
+      datos: entrenadorActualizado,
+    });
+  } catch (error) {
+    console.error("Error al actualizar entrenador:", error);
+
+    if (error.code === "23505") {
       return res.status(400).json({
         exito: false,
-        mensaje: "Datos incompletos",
-        detalles: "ID, nombre y correo son obligatorios",
+        mensaje: "El correo ya está registrado",
+        detalles: "Por favor use otro correo electrónico",
       });
     }
-  
-    try {
-      const entrenadorActualizado = await Entrenador.actualizarEntrenador({
-        id_entrenador,
-        nombre,
-        correo,
-        costo_mensual,
-        costo_sesion,
-      });
-  
-      if (!entrenadorActualizado) {
-        return res.status(404).json({
-          exito: false,
-          mensaje: "Entrenador no encontrado",
-        });
-      }
-  
-      res.json({
-        exito: true,
-        mensaje: "Entrenador actualizado correctamente",
-        datos: entrenadorActualizado,
-      });
-    } catch (error) {
-      console.error("Error al actualizar entrenador:", error);
-  
-      if (error.code === "23505") {
-        return res.status(400).json({
-          exito: false,
-          mensaje: "El correo ya está registrado",
-          detalles: "Por favor use otro correo electrónico",
-        });
-      }
-  
-      res.status(500).json({
-        exito: false,
-        mensaje: "Error al actualizar entrenador",
-        detalles: "Ocurrió un error interno del servidor",
-      });
-    }
-  };
+
+    res.status(500).json({
+      exito: false,
+      mensaje: "Error al actualizar entrenador",
+      detalles: "Ocurrió un error interno del servidor",
+    });
+  }
 };
