@@ -18,5 +18,14 @@
     "express": "^4.21.2",
     "nodemailer": "^7.0.3",
     "pg": "^8.14.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luislr220/backend_gimnasio.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/luislr220/backend_gimnasio/issues"
+  },
+  "homepage": "https://github.com/luislr220/backend_gimnasio#readme"
 }

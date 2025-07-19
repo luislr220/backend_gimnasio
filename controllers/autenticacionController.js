@@ -2,10 +2,13 @@ const Auth = require("../models/autenticacion");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const transporter = require("../config/emailController");
+const { sanitizeInput, sanitizeEmail } = require("../utils/sanitization");
 
 // Iniciar sesión
 exports.iniciarSesion = async (req, res) => {
-  const { correo, contrasena } = req.body;
+  // Sanitizar inputs
+  const correo = sanitizeEmail(req.body.correo);
+  const contrasena = req.body.contrasena; // No sanitizar contraseña (puede contener caracteres especiales)
 
   if (!correo || !contrasena) {
     return res.status(400).json({
@@ -28,10 +31,7 @@ exports.iniciarSesion = async (req, res) => {
     }
 
     // Verificar contraseña
-    const contrasenaValida = await bcrypt.compare(
-      contrasena,
-      usuario.contrasena
-    );
+    const contrasenaValida = await bcrypt.compare(contrasena, usuario.contrasena);
 
     if (!contrasenaValida) {
       return res.status(401).json({
@@ -49,7 +49,7 @@ exports.iniciarSesion = async (req, res) => {
       // Guardar token en la base de datos
       await Auth.guardarToken2FA(usuario, token2FA, expiracion);
 
-      // Intentar enviar el correo
+      // Enviar el correo con contenido sanitizado
       await transporter.sendMail({
         from: '"Tu Gimnasio" <noreply@tugimnasio.com>',
         to: usuario.correo,
@@ -60,8 +60,7 @@ exports.iniciarSesion = async (req, res) => {
                <p>Este código expirará en 10 minutos.</p>`,
       });
 
-      const idKey =
-        usuario.tipo === "entrenador" ? "id_entrenador" : "id_usuario";
+      const idKey = usuario.tipo === "entrenador" ? "id_entrenador" : "id_usuario";
 
       res.json({
         exito: true,
@@ -84,8 +83,7 @@ exports.iniciarSesion = async (req, res) => {
       return res.status(500).json({
         exito: false,
         mensaje: "Error al enviar el código",
-        detalles:
-          "No se pudo enviar el código de verificación al correo especificado",
+        detalles: "No se pudo enviar el código de verificación al correo especificado",
       });
     }
   } catch (error) {
@@ -100,7 +98,12 @@ exports.iniciarSesion = async (req, res) => {
 
 // Verificar token 2FA
 exports.verificarToken = async (req, res) => {
-  const { id_usuario, id_entrenador, token, tipo } = req.body;
+  // Sanitizar inputs
+  const id_usuario = sanitizeInput(req.body.id_usuario);
+  const id_entrenador = sanitizeInput(req.body.id_entrenador);
+  const token = sanitizeInput(req.body.token);
+  const tipo = sanitizeInput(req.body.tipo);
+
   const id = tipo === "entrenador" ? id_entrenador : id_usuario;
 
   if (!id || !token || !tipo) {
@@ -125,13 +128,8 @@ exports.verificarToken = async (req, res) => {
     // Limpiar el token usado
     await Auth.limpiarToken2FA(id, tipo);
 
-    // Eliminar la contraseña del objeto de respuesta
-    const {
-      contrasena,
-      token_2fa,
-      token_2fa_expiracion,
-      ...usuarioSinDatosSensibles
-    } = usuario;
+    // Eliminar datos sensibles de la respuesta
+    const { contrasena, token_2fa, token_2fa_expiracion, ...usuarioSinDatosSensibles } = usuario;
 
     res.json({
       exito: true,
@@ -150,81 +148,117 @@ exports.verificarToken = async (req, res) => {
 
 // Solicitar recuperación de contraseña
 exports.solicitarRecuperacion = async (req, res) => {
-  const { correo } = req.body;
+  const correo = sanitizeEmail(req.body.correo);
+  
   if (!correo) {
-    return res.status(400).json({ exito: false, mensaje: "Correo requerido" });
+    return res.status(400).json({ 
+      exito: false, 
+      mensaje: "Correo requerido" 
+    });
   }
+
   try {
     // Buscar en usuarios
     let usuario = await Auth.buscarUsuarioPorCorreo(correo);
     let tipo = "cliente";
+    
     if (!usuario) {
       // Si no está en usuarios, buscar en entrenadores
       usuario = await Auth.buscarEntrenadorPorCorreo(correo);
       tipo = "entrenador";
     }
+    
     if (!usuario) {
-      return res
-        .status(404)
-        .json({ exito: false, mensaje: "Correo no registrado" });
+      return res.status(404).json({ 
+        exito: false, 
+        mensaje: "Correo no registrado" 
+      });
     }
 
-    // Generar token alfanumérico de 8 caracteres
+    // Generar token seguro
     const token = crypto.randomBytes(4).toString("hex").toUpperCase();
     const expiracion = new Date(Date.now() + 15 * 60000); // 15 minutos
 
     await Auth.guardarTokenRecuperacion(correo, token, expiracion, tipo);
 
-    // Enviar correo
+    // Enviar correo con contenido sanitizado
     await transporter.sendMail({
       from: '"Recuperación" <noreply@tugimnasio.com>',
       to: correo,
       subject: "Recuperación de contraseña",
       text: `Usa este token para recuperar tu contraseña: ${token}`,
       html: `<p>Usa este token para recuperar tu contraseña: <b>${token}</b></p>
-      <p>Este código expirará en 10 minutos.</p>`,
+             <p>Este código expirará en 10 minutos.</p>`,
     });
 
-    res.json({ exito: true, mensaje: "Correo de recuperación enviado" });
+    res.json({ 
+      exito: true, 
+      mensaje: "Correo de recuperación enviado" 
+    });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ exito: false, mensaje: "Error al solicitar recuperación" });
+    res.status(500).json({ 
+      exito: false, 
+      mensaje: "Error al solicitar recuperación" 
+    });
   }
 };
 
 // Cambiar contraseña usando token
 exports.cambiarContrasenaConToken = async (req, res) => {
-  const { token, nuevaContrasena } = req.body;
+  const token = sanitizeInput(req.body.token);
+  const nuevaContrasena = req.body.nuevaContrasena; // No sanitizar contraseña
+  
   if (!token || !nuevaContrasena) {
-    return res.status(400).json({ exito: false, mensaje: "Datos incompletos" });
+    return res.status(400).json({ 
+      exito: false, 
+      mensaje: "Datos incompletos" 
+    });
   }
+
   try {
     // Buscar en usuarios
     let usuario = await Auth.buscarPorTokenRecuperacion(token, "cliente");
     let tipo = "cliente";
+    
     if (!usuario) {
       // Si no está en usuarios, buscar en entrenadores
       usuario = await Auth.buscarPorTokenRecuperacion(token, "entrenador");
       tipo = "entrenador";
     }
+    
     if (!usuario) {
-      return res
-        .status(400)
-        .json({ exito: false, mensaje: "Token inválido o expirado" });
+      return res.status(400).json({ 
+        exito: false, 
+        mensaje: "Token inválido o expirado" 
+      });
     }
+
+    // Validar fortaleza de contraseña
+    if (nuevaContrasena.length < 8) {
+      return res.status(400).json({
+        exito: false,
+        mensaje: "Contraseña insegura",
+        detalles: "La contraseña debe tener al menos 8 caracteres"
+      });
+    }
+
     const hash = await bcrypt.hash(nuevaContrasena, 10);
     await Auth.cambiarContrasenaPorRecuperacion(
       usuario[tipo === "entrenador" ? "id_entrenador" : "id_usuario"],
       hash,
       tipo
     );
-    res.json({ exito: true, mensaje: "Contraseña actualizada correctamente" });
+    
+    res.json({ 
+      exito: true, 
+      mensaje: "Contraseña actualizada correctamente" 
+    });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ exito: false, mensaje: "Error al cambiar contraseña" });
+    res.status(500).json({ 
+      exito: false, 
+      mensaje: "Error al cambiar contraseña" 
+    });
   }
 };

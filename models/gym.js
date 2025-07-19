@@ -23,11 +23,21 @@ exports.actualizarGym = async (
   id_gimnasio,
   { nombre, direccion, hora_entrada, hora_salida, descripcion }
 ) => {
+  // Validación básica de entradas 
+  if (!id_gimnasio || !nombre || !direccion) {
+    throw new Error("Datos incompletos: id_gimnasio, nombre y dirección son obligatorios");
+  }
+
   const consulta = `
-  UPDATE gimnasios
-  SET nombre = $1, direccion = $2, hora_entrada = $3, hora_salida = $4, descripcion = $5
-  WHERE id_gimnasio = $6
-  RETURNING *
+    UPDATE gimnasios
+    SET
+      nombre = $1,
+      direccion = $2,
+      hora_entrada = $3,
+      hora_salida = $4,
+      descripcion = $5
+    WHERE id_gimnasio = $6
+    RETURNING *
   `;
 
   const valores = [
@@ -36,12 +46,31 @@ exports.actualizarGym = async (
     hora_entrada,
     hora_salida,
     descripcion,
-    id_gimnasio,
+    id_gimnasio
   ];
-  const resultado = await pool.query(consulta, valores);
-  return resultado.rows[0];
-};
 
+  try {
+    const resultado = await pool.query(consulta, valores);
+   
+    if (resultado.rows.length === 0) {
+      throw new Error("Gimnasio no encontrado");
+    }
+
+    return resultado.rows[0]; // Devuelve el gimnasio actualizado
+
+  } catch (error) {
+    console.error("Error en actualizarGym:", error.message);
+   
+    // Clasificación de errores
+    if (error.code === '23505') { // Violación de unique key (PostgreSQL)
+      throw new Error("El nombre del gimnasio ya existe");
+    } else if (error.code === '22P02') { // Tipo de dato inválido
+      throw new Error("Formato de hora inválido (use HH:MM)");
+    } else {
+      throw new Error("Error al actualizar gimnasio en la base de datos");
+    }
+  }
+};
 //Listar los gym con total de entrenadores
 exports.obtenerGyms = async () => {
   const consulta = `
@@ -96,8 +125,7 @@ exports.eliminarGym = async (id_gimnasio) => {
 
 exports.obtenerGymPorId = async (id_gimnasio) => {
   const consulta = `
-    SELECT 
-      g.*,
+    SELECT g.*,
       COUNT(e.id_entrenador) as total_entrenadores
     FROM gimnasios g
     LEFT JOIN entrenadores e ON g.id_gimnasio = e.id_gimnasio
