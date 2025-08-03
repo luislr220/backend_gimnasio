@@ -5,13 +5,11 @@ const SALT_ROUNDS = 10;
 
 // Registrar usuario
 exports.registrarUsuario = async (req, res) => {
-  // Sanitiza los datos recibidos
   const nombre = sanitizeInput(req.body.nombre);
   const correo = sanitizeEmail(req.body.correo);
-  const contrasena = req.body.contrasena; // La contraseña no se sanitiza aquí
+  const contrasena = req.body.contrasena;
   const rol = sanitizeInput(req.body.rol);
 
-  // Validar que se envíen los datos
   if (!nombre || !correo || !contrasena || !rol) {
     return res.status(400).json({
       exito: false,
@@ -21,10 +19,8 @@ exports.registrarUsuario = async (req, res) => {
   }
 
   try {
-    // Generar hash de la contraseña
     const hashContrasena = await bcrypt.hash(contrasena, SALT_ROUNDS);
 
-    // Llamamos al modelo para registrar el usuario
     const usuario = await Usuario.crearUsuario({
       nombre,
       correo,
@@ -32,7 +28,6 @@ exports.registrarUsuario = async (req, res) => {
       rol,
     });
 
-    // Eliminamos la contraseña del objeto de respuesta
     const { contrasena: _, ...usuarioSinContrasena } = usuario;
 
     res.status(201).json({
@@ -44,7 +39,6 @@ exports.registrarUsuario = async (req, res) => {
     console.error("Error al registrar usuario:", error);
 
     if (error.code === "23505") {
-      // Código PostgreSQL para duplicate key
       return res.status(400).json({
         exito: false,
         mensaje: "El correo ya está registrado",
@@ -62,7 +56,6 @@ exports.registrarUsuario = async (req, res) => {
 
 // Actualizar usuario
 exports.actualizarUsuario = async (req, res) => {
-  // Sanitiza los datos recibidos
   const id_usuario = req.body.id_usuario;
   const nombre = sanitizeInput(req.body.nombre);
   const correo = sanitizeEmail(req.body.correo);
@@ -114,3 +107,35 @@ exports.actualizarUsuario = async (req, res) => {
       detalles: "Ocurrió un error interno del servidor",
     });
   }
+};
+
+// Eliminar usuario
+exports.eliminarUsuario = async (req, res) => {
+  const id_usuario = req.body.id_usuario;
+
+  if (!id_usuario) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: "ID de usuario requerido",
+    });
+  }
+
+  try {
+    const eliminado = await Usuario.eliminarUsuario(id_usuario);
+    if (!eliminado) {
+      return res.status(404).json({
+        exito: false,
+        mensaje: "Usuario no encontrado",
+      });
+    }
+    res.json({
+      exito: true,
+      mensaje: "Usuario eliminado correctamente",
+    });
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    res.status(500).json({
+      exito: false,
+      mensaje: "Error al eliminar usuario",
+      detalles: "Ocurrió un error interno del servidor",
+    });
