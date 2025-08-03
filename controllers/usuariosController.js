@@ -1,10 +1,15 @@
 const Usuario = require("../models/usuario");
 const bcrypt = require("bcrypt");
+const { sanitizeInput, sanitizeEmail } = require("../utils/sanitization");
 const SALT_ROUNDS = 10;
 
 // Registrar usuario
 exports.registrarUsuario = async (req, res) => {
-  const { nombre, correo, contrasena, rol } = req.body;
+  // Sanitiza los datos recibidos
+  const nombre = sanitizeInput(req.body.nombre);
+  const correo = sanitizeEmail(req.body.correo);
+  const contrasena = req.body.contrasena; // La contraseña no se sanitiza aquí
+  const rol = sanitizeInput(req.body.rol);
 
   // Validar que se envíen los datos
   if (!nombre || !correo || !contrasena || !rol) {
@@ -57,7 +62,10 @@ exports.registrarUsuario = async (req, res) => {
 
 // Actualizar usuario
 exports.actualizarUsuario = async (req, res) => {
-  const { id_usuario, nombre, correo } = req.body;
+  // Sanitiza los datos recibidos
+  const id_usuario = req.body.id_usuario;
+  const nombre = sanitizeInput(req.body.nombre);
+  const correo = sanitizeEmail(req.body.correo);
 
   if (!id_usuario || !nombre || !correo) {
     return res.status(400).json({
@@ -106,4 +114,3 @@ exports.actualizarUsuario = async (req, res) => {
       detalles: "Ocurrió un error interno del servidor",
     });
   }
-   };
