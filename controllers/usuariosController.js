@@ -139,3 +139,5 @@ exports.eliminarUsuario = async (req, res) => {
       mensaje: "Error al eliminar usuario",
       detalles: "Ocurrió un error interno del servidor",
     });
+  };
+};
