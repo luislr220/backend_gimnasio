@@ -1,16 +1,12 @@
 const Usuario = require("../models/usuario");
 const bcrypt = require("bcrypt");
-const { sanitizeInput, sanitizeEmail } = require("../utils/sanitization");
 const SALT_ROUNDS = 10;
 
 // Registrar usuario
 exports.registrarUsuario = async (req, res) => {
-  // Sanitiza los datos antes de guardar
-  const nombre = sanitizeInput(req.body.nombre);
-  const correo = sanitizeEmail(req.body.correo);
-  const contrasena = sanitizeInput(req.body.contrasena);
-  const rol = sanitizeInput(req.body.rol);
+  const { nombre, correo, contrasena, rol } = req.body;
 
+  // Validar que se envíen los datos
   if (!nombre || !correo || !contrasena || !rol) {
     return res.status(400).json({
       exito: false,
@@ -20,8 +16,10 @@ exports.registrarUsuario = async (req, res) => {
   }
 
   try {
+    // Generar hash de la contraseña
     const hashContrasena = await bcrypt.hash(contrasena, SALT_ROUNDS);
 
+    // Llamamos al modelo para registrar el usuario
     const usuario = await Usuario.crearUsuario({
       nombre,
       correo,
@@ -29,6 +27,7 @@ exports.registrarUsuario = async (req, res) => {
       rol,
     });
 
+    // Eliminamos la contraseña del objeto de respuesta
     const { contrasena: _, ...usuarioSinContrasena } = usuario;
 
     res.status(201).json({
@@ -40,6 +39,7 @@ exports.registrarUsuario = async (req, res) => {
     console.error("Error al registrar usuario:", error);
 
     if (error.code === "23505") {
+      // Código PostgreSQL para duplicate key
       return res.status(400).json({
         exito: false,
         mensaje: "El correo ya está registrado",
@@ -57,10 +57,7 @@ exports.registrarUsuario = async (req, res) => {
 
 // Actualizar usuario
 exports.actualizarUsuario = async (req, res) => {
-  // Sanitiza los datos antes de guardar
-  const id_usuario = sanitizeInput(req.body.id_usuario);
-  const nombre = sanitizeInput(req.body.nombre);
-  const correo = sanitizeEmail(req.body.correo);
+  const { id_usuario, nombre, correo } = req.body;
 
   if (!id_usuario || !nombre || !correo) {
     return res.status(400).json({
@@ -109,4 +106,4 @@ exports.actualizarUsuario = async (req, res) => {
       detalles: "Ocurrió un error interno del servidor",
     });
   }
-};
+   };
