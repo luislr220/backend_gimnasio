@@ -5,9 +5,10 @@ const SALT_ROUNDS = 10;
 
 // Registrar usuario
 exports.registrarUsuario = async (req, res) => {
+  // Sanitiza los datos recibidos
   const nombre = sanitizeInput(req.body.nombre);
   const correo = sanitizeEmail(req.body.correo);
-  const contrasena = req.body.contrasena;
+  const contrasena = sanitizeInput(req.body.contrasena);
   const rol = sanitizeInput(req.body.rol);
 
   if (!nombre || !correo || !contrasena || !rol) {
@@ -56,7 +57,8 @@ exports.registrarUsuario = async (req, res) => {
 
 // Actualizar usuario
 exports.actualizarUsuario = async (req, res) => {
-  const id_usuario = req.body.id_usuario;
+  // Sanitiza los datos recibidos
+  const id_usuario = sanitizeInput(req.body.id_usuario);
   const nombre = sanitizeInput(req.body.nombre);
   const correo = sanitizeEmail(req.body.correo);
 
@@ -111,7 +113,8 @@ exports.actualizarUsuario = async (req, res) => {
 
 // Eliminar usuario
 exports.eliminarUsuario = async (req, res) => {
-  const id_usuario = req.body.id_usuario;
+  // Sanitiza el id recibido
+  const id_usuario = sanitizeInput(req.body.id_usuario);
 
   if (!id_usuario) {
     return res.status(400).json({
@@ -139,5 +142,5 @@ exports.eliminarUsuario = async (req, res) => {
       mensaje: "Error al eliminar usuario",
       detalles: "Ocurrió un error interno del servidor",
     });
-  };
+  }
 };
