@@ -5,7 +5,7 @@ const SALT_ROUNDS = 10;
 
 // Registrar usuario
 exports.registrarUsuario = async (req, res) => {
-  // Sanitiza los datos recibidos
+  // Sanitiza los datos antes de guardar
   const nombre = sanitizeInput(req.body.nombre);
   const correo = sanitizeEmail(req.body.correo);
   const contrasena = sanitizeInput(req.body.contrasena);
@@ -57,7 +57,7 @@ exports.registrarUsuario = async (req, res) => {
 
 // Actualizar usuario
 exports.actualizarUsuario = async (req, res) => {
-  // Sanitiza los datos recibidos
+  // Sanitiza los datos antes de guardar
   const id_usuario = sanitizeInput(req.body.id_usuario);
   const nombre = sanitizeInput(req.body.nombre);
   const correo = sanitizeEmail(req.body.correo);
@@ -106,40 +106,6 @@ exports.actualizarUsuario = async (req, res) => {
     res.status(500).json({
       exito: false,
       mensaje: "Error al actualizar usuario",
-      detalles: "Ocurrió un error interno del servidor",
-    });
-  }
-};
-
-// Eliminar usuario
-exports.eliminarUsuario = async (req, res) => {
-  // Sanitiza el id recibido
-  const id_usuario = sanitizeInput(req.body.id_usuario);
-
-  if (!id_usuario) {
-    return res.status(400).json({
-      exito: false,
-      mensaje: "ID de usuario requerido",
-    });
-  }
-
-  try {
-    const eliminado = await Usuario.eliminarUsuario(id_usuario);
-    if (!eliminado) {
-      return res.status(404).json({
-        exito: false,
-        mensaje: "Usuario no encontrado",
-      });
-    }
-    res.json({
-      exito: true,
-      mensaje: "Usuario eliminado correctamente",
-    });
-  } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    res.status(500).json({
-      exito: false,
-      mensaje: "Error al eliminar usuario",
       detalles: "Ocurrió un error interno del servidor",
     });
   }
