@@ -6,14 +6,14 @@
 const sanitizeInput = (input) => {
     if (typeof input !== 'string') return '';
 
-    // Elimina todo el contenido entre <script>...</script> (incluye etiquetas y contenido)
+    // Elimina todo el contenido entre <script>...</script>
     let output = input.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
 
-    // Elimina todas las etiquetas HTML/XML, incluyendo malformadas
+    // Elimina todas las etiquetas HTML/XML
     output = output.replace(/<\/?[^>]+(>|$)/g, '');
 
-    // Elimina caracteres especiales peligrosos
-    output = output.replace(/[&<>"'`=\\/]/g, '');
+    // Elimina caracteres especiales peligrosos, incluyendo paréntesis
+    output = output.replace(/[&<>"'`=\\/()]/g, '');
 
     // Elimina espacios al inicio y final
     output = output.trim();
